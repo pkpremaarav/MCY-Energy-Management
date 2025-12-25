@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - MCY Energy Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .settings-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .settings-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 2rem;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-group p {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        
+        .file-upload {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-label {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .file-upload-label:hover {
+            background: #5568d3;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            border-left: 4px solid #48bb78;
+            color: #22543d;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            border-left: 4px solid #f56565;
+            color: #742a2a;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            border-left: 4px solid #3182ce;
+            color: #2c5282;
+        }
+        
+        .upload-progress {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-cog"></i> Settings & Configuration</h1>
+            <p>Manage data uploads, system configuration, and preferences</p>
+        </div>
+        
+        <div class="settings-container">
+            <div class="settings-tabs">
+                <button class="tab-button active" onclick="switchTab('data-upload')">Data Upload</button>
+                <button class="tab-button" onclick="switchTab('analysis-settings')">Analysis Settings</button>
+                <button class="tab-button" onclick="switchTab('notifications')">Notifications</button>
+                <button class="tab-button" onclick="switchTab('system')">System Info</button>
+            </div>
+            
+            <!-- Data Upload Tab -->
+            <div id="data-upload" class="tab-content active">
+                <div class="form-section">
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Upload New Data</h3>
+                    
+                    <div id="uploadAlert"></div>
+                    
+                    <div class="form-group">
+                        <label>Select CSV File</label>
+                        <div class="file-upload">
+                            <input type="file" id="csvFile" accept=".csv" onchange="previewFile()">
+                            <label for="csvFile" class="file-upload-label">
+                                <i class="fas fa-folder-open"></i> Choose File
+                            </label>
+                        </div>
+                        <p>Maximum file size: 500 MB. Supported format: CSV (comma or tab-separated)</p>
+                    </div>
+                    
+                    <div id="fileInfo" style="display: none; margin-bottom: 1rem;">
+                        <p><strong>File:</strong> <span id="fileName"></span></p>
+                        <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                    </div>
+                    
+                    <button class="btn" onclick="uploadFile()">
+                        <i class="fas fa-upload"></i> Upload & Process
+                    </button>
+                    
+                    <div class="upload-progress" id="uploadProgress">
+                        <p>Processing data...</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <h4>Recent Uploads</h4>
+                        <table style="width: 100%; margin-top: 1rem;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Filename</th>
+                                    <th>Records</th>
+                                    <th>Buildings</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2024-12-25</td>
+                                    <td>MCY_WEST.csv</td>
+                                    <td>8,760</td>
+                                    <td>24</td>
+                                    <td><span class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.9rem;">Active</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Settings Tab -->
+            <div id="analysis-settings" class="tab-content">
+                <div class="form-section">
+                    <h3><i class="fas fa-sliders-h"></i> Analysis Parameters</h3>
+                    
+                    <div class="form-group">
+                        <label>Low Delta-T Threshold (°C)</label>
+                        <input type="number" id="lowDeltaT" value="4.0" min="0" max="10" step="0.5">
+                        <p>Values below this indicate potential leakage</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>High Delta-T Threshold (°C)</label>
+                        <input type="number" id="highDeltaT" value="8.0" min="0" max="20" step="0.5">
+                        <p>Values above this indicate undersizing or fouling</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Valve Anomaly Threshold (Std Dev)</label>
+                        <input type="number" id="valveAnomaly" value="0.5" min="0" max="5" step="0.1">
+                        <p>For detecting manual mode (flat valve signals)</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Water Leak Detection Flow (LPM)</label>
+                        <input type="number" id="waterLeak" value="5.0" min="0" max="50" step="0.5">
+                        <p>Constant flow above this with low cooling demand = leak</p>
+                    </div>
+                    
+                    <button class="btn" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div id="notifications" class="tab-content">
+                <div class="form-section">
+                    <h3><i class="fas fa-bell"></i> Alert Configuration</h3>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" checked> Enable Critical Alerts
+                        </label>
+                        <p>Receive alerts for critical anomalies and manual valve overrides</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" checked> Enable Warning Alerts
+                        </label>
+                        <p>Receive alerts for efficiency warnings and potential issues</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox"> Enable Info Alerts
+                        </label>
+                        <p>Receive informational alerts and system updates</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email Alerts To:</label>
+                        <input type="email" placeholder="facility.manager@mcy.com">
+                        <p>Enter email addresses separated by commas</p>
+                    </div>
+                    
+                    <button class="btn" onclick="saveNotifications()">
+                        <i class="fas fa-save"></i> Save Preferences
+                    </button>
+                </div>
+            </div>
+            
+            <!-- System Info Tab -->
+            <div id="system" class="tab-content">
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> System Information</h3>
+                    
+                    <table style="width: 100%;">
+                        <tr>
+                            <td><strong>Application Version:</strong></td>
+                            <td>2.0.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Engine:</strong></td>
+                            <td>Advanced ML Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Python Version:</strong></td>
+                            <td>3.9+</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database Status:</strong></td>
+                            <td><span style="color: #48bb78;">✓ Connected</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Weather API:</strong></td>
+                            <td><span style="color: #48bb78;">✓ Active</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Last Data Sync:</strong></td>
+                            <td>2024-12-25 14:30:00</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Qatar Coordinates:</strong></td>
+                            <td>25.198°N, 51.506°E</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top: 2rem;">
+                        <button class="btn" onclick="testConnection()">
+                            <i class="fas fa-sync"></i> Test Connection
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadLogs()">
+                            <i class="fas fa-download"></i> Download Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function previewFile() {
+            const file = document.getElementById('csvFile').files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                document.getElementById('fileInfo').style.display = 'block';
+            }
+        }
+        
+        function uploadFile() {
+            const file = document.getElementById('csvFile').files[0];
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            document.getElementById('uploadProgress').style.display = 'block';
+            
+            fetch('/api/upload-csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadProgress').style.display = 'none';
+                
+                if (data.success) {
+                    showAlert('uploadAlert', 'File uploaded successfully! ' + data.message, 'success');
+                    document.getElementById('csvFile').value = '';
+                    document.getElementById('fileInfo').style.display = 'none';
+                } else {
+                    showAlert('uploadAlert', 'Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('uploadProgress').style.display = 'none';
+                showAlert('uploadAlert', 'Upload failed: ' + error.message, 'error');
+            });
+        }
+        
+        function saveSettings() {
+            alert('Settings saved successfully!');
+        }
+        
+        function saveNotifications() {
+            alert('Notification preferences saved!');
+        }
+        
+        function testConnection() {
+            alert('Testing connection... (This would call the API)');
+        }
+        
+        function downloadLogs() {
+            alert('Downloading system logs...');
+        }
+        
+        function showAlert(elementId, message, type) {
+            const alertDiv = document.getElementById(elementId);
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCY Energy Management Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --warning: #f6ad55;
+            --danger: #f56565;
+            --light: #f7fafc;
+            --dark: #2d3748;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2d3748;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .navbar-menu {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .navbar-menu a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+        
+        .navbar-menu a.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.25rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .page-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .weather-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+        
+        .weather-item {
+            text-align: center;
+        }
+        
+        .weather-item h4 {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .weather-item p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+        
+        .kpi-card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .kpi-card p {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .kpi-card .unit {
+            font-size: 0.75rem;
+            color: #999;
+            margin-left: 0.5rem;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container h3 {
+            color: var(--dark);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.75rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .alert-critical {
+            background: #fed7d7;
+            border-left: 4px solid #f56565;
+            color: #742a2a;
+        }
+        
+        .alert-warning {
+            background: #feebc8;
+            border-left: 4px solid #ed8936;
+            color: #7c2d12;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            border-left: 4px solid #3182ce;
+            color: #2c5282;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            border-left: 4px solid #48bb78;
+            color: #22543d;
+        }
+        
+        .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .building-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .building-card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.75rem;
+        }
+        
+        .building-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat h4 {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat p {
+            color: var(--primary);
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-ok {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-warning {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        
+        .status-critical {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        th {
+            background: var(--light);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        tr:hover {
+            background: var(--light);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.65rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid var(--light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar-menu {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-header h2 {
+            color: var(--primary);
+        }
+        
+        .close {
+            color: #666;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <i class="fas fa-building"></i> MCY Energy
+            </div>
+            <ul class="navbar-menu">
+                <li><a href="/" class="active">Dashboard</a></li>
+                <li><a href="/analysis">Analysis</a></li>
+                <li><a href="/data">Data</a></li>
+                <li><a href="/reports">Reports</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-chart-line"></i> Energy Management Dashboard</h1>
+            <p>Real-time HVAC monitoring and optimization for MCY buildings | Last updated: {{ timestamp }}</p>
+        </div>
+        
+        <!-- Weather Widget -->
+        <div class="weather-widget">
+            <div class="weather-item">
+                <h4><i class="fas fa-thermometer-half"></i> Temperature</h4>
+                <p>{{ weather.temperature|default('--') }}°C</p>
+            </div>
+            <div class="weather-item">
+                <h4><i class="fas fa-droplets"></i> Humidity</h4>
+                <p>{{ weather.relative_humidity_2m|default('--') }}%</p>
+            </div>
+            <div class="weather-item">
+                <h4><i class="fas fa-wind"></i> Wind Speed</h4>
+                <p>{{ weather.wind_speed_10m|default('--') }} m/s</p>
+            </div>
+            <div class="weather-item">
+                <h4><i class="fas fa-fire"></i> Cooling Load</h4>
+                <p>CRITICAL</p>
+            </div>
+        </div>
+        
+        <!-- Overall KPIs -->
+        <h2 style="color: white; margin-bottom: 1rem; margin-top: 2rem;">System Overview</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3><i class="fas fa-lightning-bolt"></i> Total Energy</h3>
+                <p>{{ total_energy }}<span class="unit">kWh</span></p>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-temperature-high"></i> Avg Delta-T</h3>
+                <p>{{ avg_delta_t }}<span class="unit">°C</span></p>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-building"></i> Buildings</h3>
+                <p>{{ num_buildings }}<span class="unit">Active</span></p>
+            </div>
+            <div class="kpi-card">
+                <h3><i class="fas fa-check-circle"></i> Health Status</h3>
+                <p><span class="status-badge status-warning">REVIEW</span></p>
+            </div>
+        </div>
+        
+        <!-- Alerts/Recommendations -->
+        <div id="alerts-container">
+            <div class="alert alert-critical">
+                <span class="alert-icon"><i class="fas fa-exclamation-circle"></i></span>
+                <div>
+                    <strong>Manual Valve Override Detected</strong>
+                    <p>Buildings with fixed valve positions detected. Immediate review recommended.</p>
+                </div>
+            </div>
+            <div class="alert alert-warning">
+                <span class="alert-icon"><i class="fas fa-warning"></i></span>
+                <div>
+                    <strong>Low Delta-T Syndrome</strong>
+                    <p>Some buildings showing ΔT < 4°C. Potential water leakage or 2-way valve bypass.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts -->
+        <h2 style="color: white; margin-bottom: 1rem; margin-top: 2rem;">Performance Analytics</h2>
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h3>Energy Consumption by Building</h3>
+                <canvas id="energyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Delta-T Analysis</h3>
+                <canvas id="deltaChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Valve Operation Status</h3>
+                <canvas id="valveChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Leakage Risk Matrix</h3>
+                <canvas id="leakageChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Building Details -->
+        <h2 style="color: white; margin-bottom: 1rem; margin-top: 2rem;">Building Analysis</h2>
+        <div id="buildings-container">
+            {% for building, data in buildings.items() %}
+            <div class="building-card">
+                <h2>{{ building }}</h2>
+                <div class="building-stats">
+                    <div class="stat">
+                        <h4>Total Energy</h4>
+                        <p>{{ "%.0f"|format(data.kpis.total_energy_kwh) }}</p>
+                    </div>
+                    <div class="stat">
+                        <h4>Avg Power</h4>
+                        <p>{{ "%.1f"|format(data.kpis.avg_power_kw) }}</p>
+                    </div>
+                    <div class="stat">
+                        <h4>Avg Delta-T</h4>
+                        <p>{{ "%.1f"|format(data.kpis.avg_delta_t) }}°C</p>
+                    </div>
+                    <div class="stat">
+                        <h4>Leakage Risk</h4>
+                        <p>
+                            {% if data.leakage_detection.severity == 'CRITICAL' %}
+                                <span class="status-badge status-critical">HIGH</span>
+                            {% elif data.leakage_detection.severity == 'WARNING' %}
+                                <span class="status-badge status-warning">MED</span>
+                            {% else %}
+                                <span class="status-badge status-ok">LOW</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Valve Status:</strong>
+                    {% for valve, mode in data.valve_analysis.items() %}
+                        <span class="status-badge {% if mode.mode == 'MANUAL' %}status-critical{% else %}status-ok{% endif %}">
+                            {{ valve }}: {{ mode.mode }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Export Buttons -->
+        <div class="button-group" style="margin-top: 2rem;">
+            <button class="btn btn-primary" onclick="exportReport('executive')">
+                <i class="fas fa-file-pdf"></i> Executive Report
+            </button>
+            <button class="btn btn-primary" onclick="exportReport('technical')">
+                <i class="fas fa-file-pdf"></i> Technical Report
+            </button>
+            <button class="btn btn-primary" onclick="exportExcel()">
+                <i class="fas fa-table"></i> Export Excel
+            </button>
+            <button class="btn btn-secondary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+        
+        <footer>
+            <p>&copy; 2024 MCY Energy Management | Advanced AI-Powered Analytics</p>
+            <p><small>Data refresh interval: 1 hour | Next update: TBD</small></p>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize Charts
+        const energyCtx = document.getElementById('energyChart').getContext('2d');
+        new Chart(energyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['J5', 'J4', 'J3', 'J2', 'A5', 'A4'],
+                datasets: [{
+                    label: 'Energy (kWh)',
+                    data: [2300, 2100, 2500, 2200, 2400, 2100],
+                    backgroundColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        const deltaCtx = document.getElementById('deltaChart').getContext('2d');
+        new Chart(deltaCtx, {
+            type: 'line',
+            data: {
+                labels: ['J5', 'J4', 'J3', 'J2', 'A5', 'A4'],
+                datasets: [{
+                    label: 'Delta-T (°C)',
+                    data: [5.2, 4.8, 3.2, 6.1, 5.5, 4.2],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        const valveCtx = document.getElementById('valveChart').getContext('2d');
+        new Chart(valveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Auto', 'Manual'],
+                datasets: [{
+                    data: [75, 25],
+                    backgroundColor: ['#48bb78', '#f56565']
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+        
+        const leakageCtx = document.getElementById('leakageChart').getContext('2d');
+        new Chart(leakageCtx, {
+            type: 'radar',
+            data: {
+                labels: ['J5', 'J4', 'J3', 'J2', 'A5', 'A4'],
+                datasets: [{
+                    label: 'Leakage Risk Score',
+                    data: [3, 2, 7, 1, 4, 2],
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 10
+                    }
+                }
+            }
+        });
+        
+        function exportReport(type) {
+            alert(`Exporting ${type} report...`);
+        }
+        
+        function exportExcel() {
+            alert('Exporting Excel file...');
+        }
+    </script>
+</body>
+</html>
